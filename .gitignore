@@ -1,0 +1,9 @@
+__pycache__/
+errors/
+jar_ignore/
+
+*.jar
+
+process_log.txt
+
+stdin.txt
