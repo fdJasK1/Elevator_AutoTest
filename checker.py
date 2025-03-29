@@ -21,6 +21,7 @@ class Req:
         self.from_floor = eles[4]
         self.to_floor = eles[6]
         self.ele_id = int(eles[8])
+        self.request_time = float(req[1:req.index(']')].strip())
     
     def parseReq(self, req):
         req = req.replace('\n', '')
@@ -42,6 +43,9 @@ class Req:
 
     def getEleId(self):
         return self.ele_id
+    
+    def getRequestTime(self):
+        return self.request_time
 
 STATE_OPEN = 0
 STATE_CLOSE = 1
@@ -51,6 +55,7 @@ MAX_FLOOR = 11
 MAX_NUM = 6
 
 reqDict = {}
+reqDict_backup = {}
 floors = []
 states = []
 passengers = []
@@ -68,10 +73,11 @@ def check(input_str, output_str, name):
     flag[0] = 1
     count = 1
     
-    # Initialize power consumption counters
+    # 存储计算性能所需的数据
     arrive_count = 0
     open_count = 0
     close_count = 0
+    passenger_metrics = []
     
     lines = output_str.split('\n')
     for line in lines:
@@ -80,41 +86,57 @@ def check(input_str, output_str, name):
             count += 1
             if not res[0]:
                 error.error_output(name, res[1], input_str, output_str, "Line: " + str(res[2]))
-                return False, 0  # Return False and 0 power if error found
+                return False, 0, 0
             
-            # Count operations for power calculation
             if line.startswith("[") and "]" in line:
+                op_time = float(line[1:line.index("]")].strip())
                 content = line[line.index("]")+1:]
+                
                 if content.startswith("ARRIVE"):
                     arrive_count += 1
                 elif content.startswith("OPEN"):
                     open_count += 1
                 elif content.startswith("CLOSE"):
                     close_count += 1
+                elif content.startswith("OUT"):
+                    # 计算下车乘客的等候时间
+                    passenger_id = int(content.split('-')[1])
+                    req = reqDict_backup.get(passenger_id)
+                    if req:
+                        completion_time = op_time - req.getRequestTime()
+                        passenger_metrics.append((req.getPriority(), completion_time))
     
     if len(reqDict) != 0:
         missing = ""
         for req in reqDict.values():
             missing += str(req.getUserId()) + "\n"
         error.error_output(name, "Not all requests are processed", input_str, output_str, "Missing: " + missing)
-        return False, 0
+        return False, 0, 0
     
     for i in range(6):
         if len(passengers[i]) != 0:
             error.error_output(name, "Someone is trapped in elevator", input_str, output_str, "Elevator ID: " + str(i + 1))
-            return False, 0
+            return False, 0, 0
         if states[i] != STATE_CLOSE:
             error.error_output(name, "Elevator door is not close", input_str, output_str, "Elevator ID: " + str(i + 1))
-            return False, 0
+            return False, 0, 0
     
+    # 计算性能
     W_ARRIVE = 0.4
     W_OPEN = 0.1
     W_CLOSE = 0.1
     total_power = (W_ARRIVE * arrive_count + 
                    W_OPEN * open_count + 
                    W_CLOSE * close_count)
+
+    if passenger_metrics:
+        sum_weighted_time = sum(p * t for p, t in passenger_metrics)
+        sum_weights = sum(p for p, t in passenger_metrics)
+        wt = sum_weighted_time / sum_weights
+    else:
+        wt = 0
     
-    return True, total_power
+    return True, total_power, wt
 
 def initElevator():
     global global_last_op_time
@@ -143,6 +165,7 @@ def processInput(input_str):
             break
         req = Req(ele)
         reqDict[req.getUserId()] = req
+        reqDict_backup[req.getUserId()] = req
 
 def process(read, lineNum):
     global global_last_op_time

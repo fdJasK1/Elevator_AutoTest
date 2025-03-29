@@ -20,6 +20,6 @@ def evaluate(origin, name):
         output, run_time = run_java.execute_java_with_program(name, program_path)
     except func_timeout.exceptions.FunctionTimedOut as e:
         error.error_output(name, "Time Limit Exceeded", origin, "", e)
-        return False, 0, 0
-    res, total_power = checker.check(origin, output, name)
-    return res, total_power, run_time
+        return False, 0, 0, 0
+    res, total_power, wt = checker.check(origin, output, name)
+    return res, total_power, wt, run_time
