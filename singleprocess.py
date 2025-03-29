@@ -31,14 +31,15 @@ def single_process(jar_files, interact):
                     name = os.path.splitext(jar_file)[0].split("/")[1]
 
                 try:
-                    res, run_time = evaluate.evaluate(input_str, name)
+                    res, total_power, run_time = evaluate.evaluate(input_str, name)
                     if res == False:
                         log_file.write(f"{name}: Wrong or TLE\n")
                         print(str(name) + ": " + Fore.RED + "Wrong or TLE" + Fore.WHITE)
                         wrong += 1
                     else:
-                        log_file.write(f"{name}: Accepted with {run_time}s\n")
-                        print(str(name) + ": " + Fore.GREEN + "Accepted" + Fore.WHITE + " with " + str(run_time) + "s")
+                        formatted_power = f"{total_power:.1f}"
+                        log_file.write(f"{name}: Accepted with {run_time}s, power costed {str(formatted_power)}\n")
+                        print(str(name) + ": " + Fore.GREEN + "Accepted" + Fore.WHITE + " with " + str(run_time) + "s" + ", power costed " + str(formatted_power))
                 except func_timeout.exceptions.FunctionTimedOut as e:
                     tle += 1
                     log_file.write(f"{os.path.basename(jar_file)}: Parse Time Limit Exceeded\n")

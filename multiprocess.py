@@ -18,13 +18,14 @@ def fun(input_str, name, jar_file, interact):
     global wrong
     global tle
     try:
-        res, run_time = evaluate.evaluate(input_str, name)
+        res, total_power, run_time = evaluate.evaluate(input_str, name)
         if (interact):
             if (res == False):
                 print(str(name) + ": " + Fore.RED + "Wrong or TLE" + Fore.WHITE)
                 wrong += 1
             else:
-                print(str(name) + ": " + Fore.GREEN + "Accepted" + Fore.WHITE + " with " + str(run_time) + "s")
+                formatted_power = f"{total_power:.1f}"
+                print(str(name) + ": " + Fore.GREEN + "Accepted" + Fore.WHITE + " with " + str(run_time) + "s" + ", power costed " + str(formatted_power))
         elif (res == False):
             wrong += 1
     except func_timeout.exceptions.FunctionTimedOut as e:

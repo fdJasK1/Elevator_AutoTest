@@ -67,6 +67,12 @@ def check(input_str, output_str, name):
     processInput(input_str)
     flag[0] = 1
     count = 1
+    
+    # Initialize power consumption counters
+    arrive_count = 0
+    open_count = 0
+    close_count = 0
+    
     lines = output_str.split('\n')
     for line in lines:
         if line != "":
@@ -74,22 +80,41 @@ def check(input_str, output_str, name):
             count += 1
             if not res[0]:
                 error.error_output(name, res[1], input_str, output_str, "Line: " + str(res[2]))
-                return False
-
+                return False, 0  # Return False and 0 power if error found
+            
+            # Count operations for power calculation
+            if line.startswith("[") and "]" in line:
+                content = line[line.index("]")+1:]
+                if content.startswith("ARRIVE"):
+                    arrive_count += 1
+                elif content.startswith("OPEN"):
+                    open_count += 1
+                elif content.startswith("CLOSE"):
+                    close_count += 1
+    
     if len(reqDict) != 0:
         missing = ""
         for req in reqDict.values():
             missing += str(req.getUserId()) + "\n"
         error.error_output(name, "Not all requests are processed", input_str, output_str, "Missing: " + missing)
-        return False
+        return False, 0
+    
     for i in range(6):
         if len(passengers[i]) != 0:
             error.error_output(name, "Someone is trapped in elevator", input_str, output_str, "Elevator ID: " + str(i + 1))
-            return False
+            return False, 0
         if states[i] != STATE_CLOSE:
             error.error_output(name, "Elevator door is not close", input_str, output_str, "Elevator ID: " + str(i + 1))
-            return False
-    return True
+            return False, 0
+    
+    W_ARRIVE = 0.4
+    W_OPEN = 0.1
+    W_CLOSE = 0.1
+    total_power = (W_ARRIVE * arrive_count + 
+                   W_OPEN * open_count + 
+                   W_CLOSE * close_count)
+    
+    return True, total_power
 
 def initElevator():
     global global_last_op_time

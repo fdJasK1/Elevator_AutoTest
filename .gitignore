@@ -4,6 +4,4 @@ jar_ignore/
 
 *.jar
 
-process_log.txt
-
-stdin.txt
+*.txt
